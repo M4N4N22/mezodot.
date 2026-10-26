@@ -47,10 +47,10 @@ export default function DocsCliPage() {
 npx --yes ${AGENT_NPM_PACKAGE} wallet address
 npx --yes ${AGENT_NPM_PACKAGE} wallet balance
 
-npx --yes ${AGENT_NPM_PACKAGE} unlock --origin "$ORIGIN" --service quick-brief --prompt "One-line summary"
+npx --yes ${AGENT_NPM_PACKAGE} unlock --origin "https://next-app-rho-eosin.vercel.app" --service quick-brief --prompt "One-line summary"
 
 # stdio MCP proxy for IDEs (Cursor, VS Code, …):
-npx --yes ${AGENT_NPM_PACKAGE} mcp --origin "$ORIGIN"`}
+npx --yes ${AGENT_NPM_PACKAGE} mcp --origin "https://next-app-rho-eosin.vercel.app"`}
       />
 
       <DocsH2>Monorepo helpers</DocsH2>

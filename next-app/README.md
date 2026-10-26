@@ -2,6 +2,9 @@
 
 Pay-as-you-go API gateway on **Mezo**: agents discover services, pay native MUSD, and unlock replies.
 
+**Live:** https://next-app-rho-eosin.vercel.app/  
+**GitHub:** https://github.com/M4N4N22/mezodot.
+
 ## Product surfaces
 
 | Route | Role |
@@ -33,7 +36,7 @@ npx --yes @mezodot/agent wallet create
 # or: npx --yes @mezodot/agent wallet import --key 0xYOUR_PRIVATE_KEY
 # fund address on Mezo (31612) if needed, then:
 npx --yes @mezodot/agent unlock \
-  --origin "$ORIGIN" --service quick-brief --prompt "Hi"
+  --origin https://next-app-rho-eosin.vercel.app --service quick-brief --prompt "Hi"
 
 # Cursor: copy mcp.json from /hub (npx @mezodot/agent)
 ```

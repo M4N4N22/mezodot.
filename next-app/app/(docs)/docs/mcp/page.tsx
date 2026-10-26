@@ -66,7 +66,7 @@ export default function DocsMcpPage() {
           )
         </li>
       </DocsOl>
-      <CodeBlock title="mcp.json" code={agentMcpProxyConfig("$ORIGIN")} />
+      <CodeBlock title="mcp.json" code={agentMcpProxyConfig("https://next-app-rho-eosin.vercel.app")} />
 
       <DocsH2>Remote endpoint</DocsH2>
       <DocsP>
@@ -79,13 +79,13 @@ export default function DocsMcpPage() {
       <DocsH2>Handshake</DocsH2>
       <CodeBlock
         title="bash"
-        code={`curl -s "$ORIGIN/api/mcp" | jq .
+        code={`curl -s "https://next-app-rho-eosin.vercel.app/api/mcp" | jq .
 
-curl -s -X POST "$ORIGIN/api/mcp" \\
+curl -s -X POST "https://next-app-rho-eosin.vercel.app/api/mcp" \\
   -H 'Content-Type: application/json' \\
   -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"curl","version":"0"}}}'
 
-curl -s -X POST "$ORIGIN/api/mcp" \\
+curl -s -X POST "https://next-app-rho-eosin.vercel.app/api/mcp" \\
   -H 'Content-Type: application/json' \\
   -d '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' | jq .`}
       />
@@ -135,7 +135,7 @@ curl -s -X POST "$ORIGIN/api/mcp" \\
       </DocsP>
       <CodeBlock
         title="bash"
-        code={`curl -s -X POST "$ORIGIN/api/mcp" \\
+        code={`curl -s -X POST "https://next-app-rho-eosin.vercel.app/api/mcp" \\
   -H 'Content-Type: application/json' \\
   -H "X-Mezo-Demo-Secret: $DEMO_AGENT_SECRET" \\
   -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"mezodot_unlock","arguments":{"service":"quick-brief","prompt":"Say hello in one line"}}}'`}

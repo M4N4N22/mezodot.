@@ -16,7 +16,7 @@ export default function DocsApiCatalogPage() {
       description="Machine-readable service list — source of truth for prices and sellers."
     >
       <DocsH2>GET /api/services</DocsH2>
-      <CodeBlock title="http" code={`GET $ORIGIN/api/services`} />
+      <CodeBlock title="http" code={`GET https://next-app-rho-eosin.vercel.app/api/services`} />
       <DocsP>
         Returns protocol metadata (version 2), chainId, gateway, currency
         (MUSD on Mezo, 18 decimals), endpoints, x402 hints, and{" "}

@@ -11,6 +11,9 @@ Port of arcdot. (Arc / native USDC) → Mezo / MUSD ERC-20.
 | Field | Value |
 |-------|--------|
 | Project name | mezodot. |
+| Live app | https://next-app-rho-eosin.vercel.app/ |
+| Public GitHub | https://github.com/M4N4N22/mezodot. |
+| Pitch video | https://youtu.be/NfiivFvT9YA |
 | Category | agent micropayments, MUSD access |
 | Track | Track 2 (Access and Distribution) — optionally both |
 | Chain | Mezo (testnet for Wave 1) |
@@ -25,9 +28,9 @@ Port of arcdot. (Arc / native USDC) → Mezo / MUSD ERC-20.
 
 - [x] MUSD integration (ERC-20 escrow on PromptGateway)
 - [x] Working deployment on Mezo testnet — gateway [`0xda82cF44546f2f414370dDeb0F6dAAd3F21822e6`](https://explorer.test.mezo.org/address/0xda82cF44546f2f414370dDeb0F6dAAd3F21822e6)
-- [ ] Live app URL (Vercel, root = `next-app`)
-- [ ] Public GitHub
-- [ ] Deck + 2-min pitch video
+- [x] Live app URL — https://next-app-rho-eosin.vercel.app/
+- [x] Public GitHub — https://github.com/M4N4N22/mezodot.
+- [x] Pitch video — https://youtu.be/NfiivFvT9YA
 
 ## Deploy steps (operator)
 
@@ -40,7 +43,9 @@ Deployer wallet already created in `contracts/.env` (gitignored):
 3. `cd next-app && npm run dev` (or deploy Vercel with root `next-app`)
 4. Publish a demo tool in Studio; unlock via UI or MCP
 
-## Pitch angle (2 min)
+## Pitch
+
+Video: https://youtu.be/NfiivFvT9YA
 
 1. Problem: agents can call APIs but cannot pay cents autonomously  
 2. Solution: mezodot. — discover → pay MUSD → unlock  

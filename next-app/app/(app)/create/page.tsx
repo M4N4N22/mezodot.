@@ -227,9 +227,9 @@ export default function CreateServicePage() {
                   />
                   <span className="block text-xs font-normal text-muted">
                     Required. After a buyer pays, we POST the request to this
-                    HTTPS URL and return your reply. Local rehearsal:{" "}
+                    HTTPS URL and return your reply. Example:{" "}
                     <span className="font-mono text-[11px]">
-                      http://localhost:3000/api/agents/demo-brief
+                      https://next-app-rho-eosin.vercel.app/api/agents/demo-brief
                     </span>
                   </span>
                 </label>

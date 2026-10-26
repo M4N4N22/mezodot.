@@ -39,8 +39,8 @@ export default function DocsDiscoveryPage() {
       </DocsUl>
       <CodeBlock
         title="bash"
-        code={`curl -s "$ORIGIN/.well-known/mezodot.json" | jq .
-curl -s "$ORIGIN/.well-known/ai-plugin.json" | jq .`}
+        code={`curl -s "https://next-app-rho-eosin.vercel.app/.well-known/mezodot.json" | jq .
+curl -s "https://next-app-rho-eosin.vercel.app/.well-known/ai-plugin.json" | jq .`}
       />
 
       <DocsH2>MCP</DocsH2>

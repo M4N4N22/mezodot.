@@ -2,7 +2,7 @@
  * Probe a live mezodot. origin: well-known + catalog + pay instructions.
  *
  * Usage (from next-app/):
- *   npm run agent:probe -- https://your-host.example
+ *   npm run agent:probe -- https://next-app-rho-eosin.vercel.app
  *   npm run agent:probe -- http://localhost:3000
  */
 
@@ -11,7 +11,7 @@ async function main() {
     .replace(/\/$/, "");
   if (!origin || !/^https?:\/\//i.test(origin)) {
     console.error(
-      "Usage: npm run agent:probe -- <ORIGIN>\nExample: npm run agent:probe -- http://localhost:3000",
+      "Usage: npm run agent:probe -- <ORIGIN>\nExample: npm run agent:probe -- https://next-app-rho-eosin.vercel.app",
     );
     process.exit(1);
   }

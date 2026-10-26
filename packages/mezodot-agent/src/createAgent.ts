@@ -7,7 +7,7 @@ import { callMcpToolWithAutoSettle, mcpRpc } from "./client/mcp.js";
 import { resolvePrivateKey } from "./wallet/store.js";
 
 export type CreateMezodotAgentOptions = {
-  /** mezodot. host, e.g. https://your-app.vercel.app */
+  /** mezodot. host, e.g. https://next-app-rho-eosin.vercel.app */
   origin: string;
   /** Override local wallet / env key */
   privateKey?: Hex;

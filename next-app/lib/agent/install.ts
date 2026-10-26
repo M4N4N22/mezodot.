@@ -26,7 +26,7 @@ export const agentInstallCommands = {
   npmInstall: `npm install ${AGENT_NPM_PACKAGE}`,
   /** Clone + link (offline / contributors) */
   cloneLink: `# clone once
-git clone ${AGENT_GITHUB_URL}.git
+git clone ${AGENT_GITHUB_URL}
 cd mezodot./${AGENT_PACKAGE_PATH}
 npm install && npm run build && npm link
 mezodot wallet create

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-const PLACEHOLDER_ORIGIN = "https://your-app.vercel.app";
+const PLACEHOLDER_ORIGIN = "https://next-app-rho-eosin.vercel.app";
 
 /** Live deployment origin for MCP snippets (client-only). */
 export function useHubOrigin() {

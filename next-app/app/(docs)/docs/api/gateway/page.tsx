@@ -19,7 +19,7 @@ export default function DocsApiGatewayPage() {
       <DocsH2>Request</DocsH2>
       <CodeBlock
         title="http"
-        code={`POST $ORIGIN/api/gateway
+        code={`POST https://next-app-rho-eosin.vercel.app/api/gateway
 Content-Type: application/json
 X-Mezo-Tx-Hash: 0x…          # payment transaction
 X-Mezo-Address: 0x…          # payer wallet

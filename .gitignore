@@ -31,6 +31,9 @@ next-app/internal-docs/
 next-app/CLAUDE.md
 next-app/AGENTS.md
 
+# Pitch / launch video (local only — do not publish)
+pitch/
+
 # Logs
 npm-debug.log*
 yarn-debug.log*

@@ -75,7 +75,7 @@ NEXT STEPS
    ${ARC_EXPLORER}/address/${wallet.address}
    Or open /fund?address=${wallet.address}
 3. Retry unlock in your IDE, or:
-   mezodot unlock --origin https://YOUR_HOST --service <slug> --prompt "Hi"
+   mezodot unlock --origin https://next-app-rho-eosin.vercel.app --service <slug> --prompt "Hi"
 `);
 }
 
@@ -111,7 +111,7 @@ NEXT STEPS
    Or open /fund?address=${wallet.address} for a QR + live balance.
 2. Check: mezodot wallet status
 3. Add MCP in Cursor with the local proxy (see Hub), or:
-   mezodot unlock --origin https://YOUR_HOST --service quick-brief --prompt "Hi"
+   mezodot unlock --origin https://next-app-rho-eosin.vercel.app --service quick-brief --prompt "Hi"
 
 Do NOT put this key on the mezodot. server or paste it into the browser.
 

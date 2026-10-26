@@ -13,7 +13,7 @@ export const runtime = "nodejs";
  *
  * Publish a tool with Agent endpoint:
  *   http://localhost:3000/api/agents/demo-brief   (local)
- *   https://<your-host>/api/agents/demo-brief     (deployed)
+ *   https://next-app-rho-eosin.vercel.app/api/agents/demo-brief
  *
  * Optional: set DEMO_AGENT_BEARER and paste the same value as the tool bearer.
  */

@@ -54,6 +54,8 @@ On-chain deploy / e2e against Mezo testnet MUSD (`0x1189…Ac503`) is separate f
 | Field | Value |
 |-------|--------|
 | Network | Mezo Testnet · `31611` |
+| Live app | https://next-app-rho-eosin.vercel.app/ |
+| GitHub | https://github.com/M4N4N22/mezodot. |
 | PromptGateway | [`0xda82cF44546f2f414370dDeb0F6dAAd3F21822e6`](https://explorer.test.mezo.org/address/0xda82cF44546f2f414370dDeb0F6dAAd3F21822e6) |
 | Deployer | `0x610B0a6F85d00f8f3CdE1BD39A0C300a30b1D4fd` |
 | MUSD | `0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503` |

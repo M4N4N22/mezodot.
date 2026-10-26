@@ -50,12 +50,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/M4N4N22/mezodot.git",
+    "url": "git+https://github.com/M4N4N22/mezodot..git",
     "directory": "packages/mezodot-agent"
   },
-  "homepage": "https://github.com/M4N4N22/mezodot/tree/main/packages/mezodot-agent",
+  "homepage": "https://github.com/M4N4N22/mezodot./tree/main/packages/mezodot-agent",
   "bugs": {
-    "url": "https://github.com/M4N4N22/mezodot/issues"
+    "url": "https://github.com/M4N4N22/mezodot./issues"
   },
   "publishConfig": {
     "access": "public",

@@ -73,13 +73,13 @@ export default function DocsQuickstartPage() {
         code={`${agentInstallCommands.npxWalletCreate}
 # or: ${agentInstallCommands.npxWalletImport}
 # fund on /fund if needed, then:
-${agentInstallCommands.npxUnlock("$ORIGIN")}`}
+${agentInstallCommands.npxUnlock("https://next-app-rho-eosin.vercel.app")}`}
       />
 
       <DocsH2>Optional: browse the catalog</DocsH2>
       <CodeBlock
         title="bash"
-        code={`curl -s "$ORIGIN/api/services" | jq '.services[] | {slug, price_usdc, seller}'`}
+        code={`curl -s "https://next-app-rho-eosin.vercel.app/api/services" | jq '.services[] | {slug, price_usdc, seller}'`}
       />
 
       <DocsH2>Rehearsal only</DocsH2>

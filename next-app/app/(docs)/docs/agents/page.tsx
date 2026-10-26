@@ -87,7 +87,7 @@ export default function DocsAgentsPage() {
       </DocsP>
       <CodeBlock
         title="bash"
-        code={`npm run agent:probe -- "$ORIGIN"`}
+        code={`npm run agent:probe -- "https://next-app-rho-eosin.vercel.app"`}
       />
       <DocsP>
         Full client notes:{" "}
@@ -124,10 +124,10 @@ export default function DocsAgentsPage() {
         title="bash"
         code={`${agentInstallCommands.npxWalletCreate}
 # or: ${agentInstallCommands.npxWalletImport}
-npx --yes ${AGENT_NPM_PACKAGE} unlock --origin "$ORIGIN" --service <slug> --prompt "Your prompt"
+npx --yes ${AGENT_NPM_PACKAGE} unlock --origin "https://next-app-rho-eosin.vercel.app" --service <slug> --prompt "Your prompt"
 
 # Cursor mcp.json — local proxy (auto-pays):
-${agentMcpProxyConfig("$ORIGIN")}`}
+${agentMcpProxyConfig("https://next-app-rho-eosin.vercel.app")}`}
       />
       <DocsP>
         Critical: amounts are{" "}

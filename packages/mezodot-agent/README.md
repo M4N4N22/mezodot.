@@ -2,6 +2,8 @@
 
 Buyer agent client for **mezodot.** — local wallet, auto-settle **MUSD** on Mezo, MCP proxy for Cursor.
 
+Repo: https://github.com/M4N4N22/mezodot. · Live: https://next-app-rho-eosin.vercel.app/
+
 **Buyer keys never leave your machine.** Gas is **BTC**; payments are **MUSD** ERC-20.
 
 ## Install
@@ -20,7 +22,7 @@ npx --yes @mezodot/agent wallet create
 npx --yes @mezodot/agent wallet status
 
 npx --yes @mezodot/agent unlock \
-  --origin https://YOUR_HOST --service quick-brief --prompt "Hi"
+  --origin https://next-app-rho-eosin.vercel.app --service quick-brief --prompt "Hi"
 ```
 
 ## Cursor MCP
@@ -30,7 +32,7 @@ npx --yes @mezodot/agent unlock \
   "mcpServers": {
     "mezodot": {
       "command": "npx",
-      "args": ["--yes", "@mezodot/agent", "mcp", "--origin", "https://YOUR_HOST"]
+      "args": ["--yes", "@mezodot/agent", "mcp", "--origin", "https://next-app-rho-eosin.vercel.app"]
     }
   }
 }

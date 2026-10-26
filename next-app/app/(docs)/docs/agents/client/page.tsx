@@ -87,7 +87,7 @@ ${agentInstallCommands.npxWalletImportFromEnv}`}
         auto-pay. Use the local proxy in any stdio MCP host (
         <code className="font-mono text-sm">npx</code> runs the client):
       </DocsP>
-      <CodeBlock title="mcp.json" code={agentMcpProxyConfig("$ORIGIN")} />
+      <CodeBlock title="mcp.json" code={agentMcpProxyConfig("https://next-app-rho-eosin.vercel.app")} />
       <DocsUl>
         <li>Wallet keys stay on the buyer machine</li>
         <li>Proxy settles Mezo payments, then forwards tool calls</li>
@@ -102,7 +102,7 @@ ${agentInstallCommands.npxWalletImportFromEnv}`}
       <DocsH2>3b. CLI unlock</DocsH2>
       <CodeBlock
         title="bash"
-        code={`${agentInstallCommands.npxUnlock("$ORIGIN").replace("quick-brief", "<slug>")}`}
+        code={`${agentInstallCommands.npxUnlock("https://next-app-rho-eosin.vercel.app").replace("quick-brief", "<slug>")}`}
       />
 
       <DocsH2>3c. Frameworks / SDK (optional)</DocsH2>
