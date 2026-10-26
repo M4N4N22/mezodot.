@@ -1,0 +1,336 @@
+import {
+  callGatewayDemo,
+  callGatewayPaid,
+} from "@/lib/agent/client";
+import { buildPaymentInstructions } from "@/lib/agent/x402";
+import {
+  getProfilesByAddresses,
+  getServiceBySlug,
+  listPublishedServices,
+  pingSupabase,
+} from "@/lib/catalog/store";
+import { ARC } from "@/lib/mezo/constants";
+import { durableStoreReady } from "@/lib/ops/durable";
+import { isSupabaseConfigured } from "@/lib/supabase/server";
+import type { Hex } from "viem";
+import type { McpTool, McpToolResult } from "@/lib/mcp/types";
+
+/**
+ * Fixed MCP surface — services are catalog entries, not MCP tools.
+ * Agents discover via mezodot_discover, then pay/unlock via mezodot_unlock.
+ */
+const MCP_TOOLS: McpTool[] = [
+  {
+    name: "mezodot_discover",
+    description:
+      "ALWAYS call this first for any task that might use mezodot. Free catalog of published payable services (slug, title, description, price). Match the user task to a slug, then call mezodot_unlock. Do not skip discovery. Optional query filters title/description/slug.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          description:
+            "Keywords from the user task to filter services (case-insensitive)",
+        },
+      },
+    },
+  },
+  {
+    name: "mezodot_health",
+    description:
+      "Free status only (chain, gateway, durable store). Not for solving user tasks.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+    },
+  },
+  {
+    name: "mezodot_unlock",
+    description:
+      "Call ONLY after mezodot_discover, with a real service slug. Args: { service, prompt }. Auto-pays when the agent wallet has MUSD on Mezo. If NO_WALLET: STOP — ask the human A (create) or B (import existing) before any shell. Only if they pick A, run createCommand with approval. If B, show importCommand for them to run locally (never paste keys into chat). Then fundUrl if needed and retry. If INSUFFICIENT_FUNDS: show fundUrl/address and retry after MUSD on Mezo. Never invent an answer.",
+    inputSchema: {
+      type: "object",
+      required: ["service", "prompt"],
+      properties: {
+        service: {
+          type: "string",
+          description:
+            "Service slug from mezodot_discover (e.g. quick-brief, test)",
+        },
+        prompt: {
+          type: "string",
+          description: "Natural-language input for the gated service",
+        },
+        payment: {
+          type: "object",
+          description:
+            "On-chain settlement proof after depositPayment (omit to receive payment instructions)",
+          properties: {
+            txHash: { type: "string" },
+            address: { type: "string" },
+            signature: { type: "string" },
+            issuedAt: { type: "number" },
+            expiresAt: { type: "number" },
+          },
+        },
+      },
+    },
+  },
+];
+
+function originFromRequest(request: Request): string {
+  return new URL(request.url).origin;
+}
+
+export async function listMcpTools(): Promise<McpTool[]> {
+  return MCP_TOOLS;
+}
+
+function textResult(
+  text: string,
+  opts?: { isError?: boolean; meta?: Record<string, unknown> },
+): McpToolResult {
+  return {
+    content: [{ type: "text", text }],
+    isError: opts?.isError,
+    _meta: opts?.meta,
+  };
+}
+
+async function discoverServices(query?: string) {
+  const services = await listPublishedServices();
+  const profiles = await getProfilesByAddresses(
+    services.map((s) => s.owner_address),
+  );
+  const q = query?.trim().toLowerCase() ?? "";
+  const rows = services
+    .map((s) => ({
+      slug: s.slug,
+      title: s.title,
+      description: s.description,
+      price_usdc: s.price_usdc,
+      price_wei: s.price_wei,
+      seller: s.owner_address,
+      seller_name:
+        profiles.get(s.owner_address.toLowerCase())?.display_name ?? null,
+      has_upstream: Boolean(s.upstream_url?.trim()),
+    }))
+    .filter((s) => {
+      if (!q) return true;
+      return (
+        s.slug.includes(q) ||
+        s.title.toLowerCase().includes(q) ||
+        s.description.toLowerCase().includes(q) ||
+        (s.seller_name?.toLowerCase().includes(q) ?? false)
+      );
+    });
+  return rows;
+}
+
+async function unlockService(params: {
+  request: Request;
+  origin: string;
+  slug: string;
+  prompt: string;
+  paymentRaw: Record<string, unknown> | null;
+}): Promise<McpToolResult> {
+  const { request, origin, slug, prompt, paymentRaw } = params;
+
+  const service = await getServiceBySlug(slug);
+  if (!service || service.status !== "published" || service.paused) {
+    return textResult(`Service not available: ${slug}`, { isError: true });
+  }
+
+  const input = { prompt: prompt.trim() };
+  const demoSecret = request.headers.get("x-mezo-demo-secret");
+
+  if (demoSecret) {
+    const result = await callGatewayDemo({
+      baseUrl: origin,
+      service: slug,
+      input,
+      demoSecret,
+      clientRequestId: `mcp-${Date.now()}`,
+    });
+    if (result.ok) {
+      const text =
+        typeof result.body.result === "object" &&
+        result.body.result &&
+        "text" in result.body.result
+          ? String((result.body.result as { text: unknown }).text)
+          : JSON.stringify(result.body.result);
+      return textResult(text, {
+        meta: { settlement: result.body.settlement, demo: true, service: slug },
+      });
+    }
+    return textResult(JSON.stringify(result.body, null, 2), {
+      isError: true,
+      meta: { status: result.status },
+    });
+  }
+
+  if (
+    paymentRaw &&
+    typeof paymentRaw.txHash === "string" &&
+    typeof paymentRaw.address === "string" &&
+    typeof paymentRaw.signature === "string"
+  ) {
+    const gateway = ARC.gatewayAddress as `0x${string}` | undefined;
+    if (!gateway || gateway.length !== 42) {
+      return textResult("Gateway not configured on server", { isError: true });
+    }
+    const result = await callGatewayPaid({
+      baseUrl: origin,
+      service: slug,
+      input,
+      gateway,
+      feeWei: BigInt(service.price_wei),
+      txHash: paymentRaw.txHash as Hex,
+      address: paymentRaw.address as `0x${string}`,
+      signature: paymentRaw.signature as Hex,
+      issuedAt:
+        typeof paymentRaw.issuedAt === "number"
+          ? paymentRaw.issuedAt
+          : undefined,
+      expiresAt:
+        typeof paymentRaw.expiresAt === "number"
+          ? paymentRaw.expiresAt
+          : undefined,
+      clientRequestId: `mcp-${Date.now()}`,
+    });
+    if (result.ok) {
+      const text =
+        typeof result.body.result === "object" &&
+        result.body.result &&
+        "text" in result.body.result
+          ? String((result.body.result as { text: unknown }).text)
+          : JSON.stringify(result.body.result);
+      return textResult(text, {
+        meta: { settlement: result.body.settlement, service: slug },
+      });
+    }
+    return textResult(JSON.stringify(result.body, null, 2), {
+      isError: true,
+      meta: { status: result.status },
+    });
+  }
+
+  const payment = buildPaymentInstructions(service);
+  const unpaid = {
+    ok: false,
+    status: 402,
+    error: {
+      code: "PAYMENT_REQUIRED",
+      message: `Payment needed: “${service.title || service.slug}” costs ${service.price_usdc} MUSD on Mezo. With the @mezodot/agent MCP proxy, settlement is automatic once the agent wallet exists and is funded. If there is no wallet yet, create (npx --yes @mezodot/agent wallet create with approval) or import an existing key locally (wallet import — never paste keys into chat), then open /fund. Do not invent an answer.`,
+      payment,
+      service: {
+        slug: service.slug,
+        price_usdc: service.price_usdc,
+        price_wei: service.price_wei,
+        seller: service.owner_address,
+      },
+      next: "If NO_WALLET: create (approval) or import locally, open /fund if needed, retry unlock. If funded wallet empty: open /fund, then retry.",
+    },
+  };
+  return textResult(JSON.stringify(unpaid, null, 2), {
+    isError: true,
+    meta: { paymentRequired: true, payment },
+  });
+}
+
+export async function callMcpTool(params: {
+  request: Request;
+  name: string;
+  args: Record<string, unknown>;
+}): Promise<McpToolResult> {
+  const { request, name, args } = params;
+  const origin = originFromRequest(request);
+
+  if (name === "mezodot_discover" || name === "mezodot_catalog") {
+    const query = typeof args.query === "string" ? args.query : undefined;
+    const services = await discoverServices(query);
+    const payload = {
+      protocol: "mezodot.gateway",
+      chainId: ARC.chainId,
+      gateway: ARC.gatewayAddress || null,
+      mcp: `${origin}/api/mcp`,
+      note: "Prices are in MUSD on Mezo. Next: mezodot_unlock with { service, prompt }. If the wallet needs funds, relay the fund checklist to the human — do not invent an answer.",
+      next: "mezodot_unlock",
+      services,
+    };
+    return textResult(JSON.stringify(payload, null, 2));
+  }
+
+  if (name === "mezodot_health") {
+    const payload = {
+      ok: true,
+      protocol: "mezodot.mcp",
+      chainId: ARC.chainId,
+      gateway: ARC.gatewayAddress || null,
+      durableStore: durableStoreReady(),
+      supabaseConfigured: isSupabaseConfigured(),
+      supabaseOk: isSupabaseConfigured() ? await pingSupabase() : null,
+      mcp: `${origin}/api/mcp`,
+      unlock: `${origin}/api/gateway`,
+      tools: ["mezodot_discover", "mezodot_health", "mezodot_unlock"],
+    };
+    return textResult(JSON.stringify(payload, null, 2));
+  }
+
+  if (name === "mezodot_unlock") {
+    const slug =
+      typeof args.service === "string"
+        ? args.service.trim()
+        : typeof args.slug === "string"
+          ? args.slug.trim()
+          : "";
+    if (!slug) {
+      return textResult(
+        "Missing required argument: service (slug from mezodot_discover)",
+        { isError: true },
+      );
+    }
+    const prompt =
+      typeof args.prompt === "string"
+        ? args.prompt
+        : typeof args.input === "string"
+          ? args.input
+          : "";
+    if (!prompt.trim()) {
+      return textResult("Missing required argument: prompt", { isError: true });
+    }
+    const paymentRaw =
+      args.payment && typeof args.payment === "object"
+        ? (args.payment as Record<string, unknown>)
+        : null;
+    return unlockService({
+      request,
+      origin,
+      slug,
+      prompt,
+      paymentRaw,
+    });
+  }
+
+  // Legacy per-service tool names are retired.
+  if (name.startsWith("mezodot_")) {
+    return textResult(
+      JSON.stringify(
+        {
+          ok: false,
+          error: {
+            code: "TOOL_RETIRED",
+            message:
+              "Per-service MCP tools were removed. Call mezodot_discover, pick a slug, then mezodot_unlock with { service, prompt }.",
+            tools: ["mezodot_discover", "mezodot_health", "mezodot_unlock"],
+          },
+        },
+        null,
+        2,
+      ),
+      { isError: true },
+    );
+  }
+
+  return textResult(`Unknown tool: ${name}`, { isError: true });
+}

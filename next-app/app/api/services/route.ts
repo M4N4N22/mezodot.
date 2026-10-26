@@ -1,0 +1,160 @@
+import { NextResponse } from "next/server";
+import { recoverMessageAddress, type Hex } from "viem";
+import { z } from "zod";
+import { agentCatalogEnvelope } from "@/lib/agent/catalog";
+import { ARC } from "@/lib/mezo/constants";
+import { buildCreateChallenge } from "@/lib/auth/createServiceChallenge";
+import {
+  createService,
+  getProfile,
+  getProfilesByAddresses,
+  listPublishedServices,
+  upsertProfile,
+} from "@/lib/catalog/store";
+import { isValidServiceImageUrl } from "@/lib/services/image";
+import { upstreamUrlError } from "@/lib/seller/upstreamUrl";
+
+export const runtime = "nodejs";
+
+const createSchema = z.object({
+  slug: z
+    .string()
+    .min(2)
+    .max(48)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  title: z.string().min(2).max(80),
+  description: z.string().min(1).max(500),
+  price_usdc: z.string().regex(/^\d+(\.\d{1,6})?$/),
+  system_prompt: z.string().max(2000).optional().default(""),
+  upstream_url: z
+    .string()
+    .min(1, "Agent endpoint is required")
+    .max(500),
+  upstream_bearer: z.string().max(500).optional().default(""),
+  image_url: z.string().max(2_000_000).optional().nullable(),
+  owner_address: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
+  signature: z.string().regex(/^0x[a-fA-F0-9]+$/),
+  issuedAt: z.number().int().positive(),
+});
+
+function usdcToWei(usdc: string): string {
+  const [whole, frac = ""] = usdc.split(".");
+  const fracPad = (frac + "000000000000000000").slice(0, 18);
+  return BigInt(`${whole}${fracPad}`).toString();
+}
+
+export async function GET() {
+  try {
+    const services = await listPublishedServices();
+    const profiles = await getProfilesByAddresses(
+      services.map((s) => s.owner_address),
+    );
+    const sellerNames: Record<string, string | null> = {};
+    for (const [addr, p] of profiles) {
+      sellerNames[addr] = p.display_name;
+    }
+    return NextResponse.json(agentCatalogEnvelope(services, sellerNames));
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json(
+      { error: "Could not load services" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function POST(request: Request) {
+  let json: unknown;
+  try {
+    json = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const parsed = createSchema.safeParse(json);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+  }
+
+  const body = parsed.data;
+  const now = Math.floor(Date.now() / 1000);
+  if (Math.abs(now - body.issuedAt) > 300) {
+    return NextResponse.json({ error: "Signature expired" }, { status: 401 });
+  }
+
+  const priceWei = usdcToWei(body.price_usdc);
+  if (BigInt(priceWei) < ARC.feeWei) {
+    return NextResponse.json(
+      { error: "Price is below the platform minimum" },
+      { status: 400 },
+    );
+  }
+
+  const upstream_url = body.upstream_url.trim();
+  const upstreamErr = upstreamUrlError(upstream_url);
+  if (upstreamErr) {
+    return NextResponse.json({ error: upstreamErr }, { status: 400 });
+  }
+
+  const imageRaw = body.image_url?.trim() || null;
+  if (imageRaw && !isValidServiceImageUrl(imageRaw)) {
+    return NextResponse.json(
+      { error: "Invalid cover image" },
+      { status: 400 },
+    );
+  }
+
+  const challenge = buildCreateChallenge({
+    slug: body.slug,
+    title: body.title,
+    price_usdc: body.price_usdc,
+    owner_address: body.owner_address,
+    issuedAt: body.issuedAt,
+    upstream_url,
+  });
+  const recovered = await recoverMessageAddress({
+    message: challenge,
+    signature: body.signature as Hex,
+  });
+
+  if (recovered.toLowerCase() !== body.owner_address.toLowerCase()) {
+    return NextResponse.json({ error: "Bad signature" }, { status: 401 });
+  }
+
+  try {
+    // Ensure a seller profile row exists for catalog attribution.
+    // Never copy the tool title into display_name — that is Studio → Profile only.
+    const existingProfile = await getProfile(body.owner_address);
+    if (!existingProfile) {
+      await upsertProfile({ wallet_address: body.owner_address });
+    }
+
+    const service = await createService({
+      slug: body.slug,
+      owner_address: body.owner_address.toLowerCase(),
+      title: body.title,
+      description: body.description,
+      price_wei: priceWei,
+      price_usdc: body.price_usdc,
+      system_prompt: body.system_prompt || "",
+      upstream_url,
+      upstream_bearer: body.upstream_bearer.trim() || null,
+      image_url: imageRaw,
+      status: "published",
+      paused: false,
+    });
+
+    return NextResponse.json({ service }, { status: 201 });
+  } catch (err) {
+    console.error(err);
+    const message =
+      err && typeof err === "object" && "message" in err
+        ? String((err as { message: unknown }).message)
+        : "Could not create service";
+    const conflict = message.toLowerCase().includes("duplicate");
+    return NextResponse.json(
+      { error: conflict ? "That URL slug is already taken" : message },
+      { status: conflict ? 409 : 500 },
+    );
+  }
+}

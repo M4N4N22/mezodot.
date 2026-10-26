@@ -1,0 +1,65 @@
+{
+  "name": "@mezodot/agent",
+  "version": "0.1.1",
+  "description": "Buyer agent client for mezodot. — local wallet (create or import), auto-settle on Mezo, MCP proxy for IDEs.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "bin": {
+    "mezodot": "bin/mezodot.mjs"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "prepare": "npm run build",
+    "test": "node --import tsx --test test/paymentParse.test.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "viem": "^2.56.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.0",
+    "tsup": "^8.5.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0"
+  },
+  "keywords": [
+    "mezodot",
+    "mezo",
+    "musd",
+    "bitcoin",
+    "mcp",
+    "agent",
+    "x402"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/M4N4N22/mezodot.git",
+    "directory": "packages/mezodot-agent"
+  },
+  "homepage": "https://github.com/M4N4N22/mezodot/tree/main/packages/mezodot-agent",
+  "bugs": {
+    "url": "https://github.com/M4N4N22/mezodot/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "license": "MIT"
+}

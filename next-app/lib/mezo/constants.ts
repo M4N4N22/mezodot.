@@ -1,0 +1,217 @@
+import {
+  GATEWAY_FEE_USDC,
+  GATEWAY_FEE_WEI_DEFAULT,
+} from "@/lib/types/gateway";
+import {
+  getMezoChainId,
+  getMezoExplorerTxBase,
+  getMezoNetwork,
+  getMezoRpcUrl,
+  getMusdAddress,
+  getPromptGatewayAddress,
+} from "@/lib/mezo/network";
+
+export const MEZO = {
+  get network() {
+    return getMezoNetwork();
+  },
+  get chainId() {
+    return getMezoChainId();
+  },
+  get rpcUrl() {
+    return getMezoRpcUrl();
+  },
+  get explorerTxBase() {
+    return getMezoExplorerTxBase();
+  },
+  get gatewayAddress() {
+    return getPromptGatewayAddress();
+  },
+  get musdAddress() {
+    return getMusdAddress();
+  },
+  feeWei: BigInt(
+    process.env.GATEWAY_FEE_WEI ??
+      process.env.NEXT_PUBLIC_GATEWAY_MIN_FEE_WEI ??
+      GATEWAY_FEE_WEI_DEFAULT.toString(),
+  ),
+  feeUsdc: GATEWAY_FEE_USDC,
+  feeMusd: GATEWAY_FEE_USDC,
+  platformFeeBps: Number(process.env.PLATFORM_FEE_BPS ?? "1000"),
+};
+
+/** @deprecated Use MEZO */
+export const ARC = MEZO;
+
+/** Minimal ERC-20 ABI for MUSD approve / balance. */
+export const erc20Abi = [
+  {
+    type: "function",
+    name: "approve",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "spender", type: "address" },
+      { name: "amount", type: "uint256" },
+    ],
+    outputs: [{ name: "", type: "bool" }],
+  },
+  {
+    type: "function",
+    name: "allowance",
+    stateMutability: "view",
+    inputs: [
+      { name: "owner", type: "address" },
+      { name: "spender", type: "address" },
+    ],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "balanceOf",
+    stateMutability: "view",
+    inputs: [{ name: "account", type: "address" }],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "decimals",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint8" }],
+  },
+] as const;
+
+/** PromptGateway V4 — MUSD ERC-20 depositPayment(paymentId, seller, amount) */
+export const promptGatewayAbi = [
+  {
+    type: "function",
+    name: "depositPayment",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "paymentId", type: "bytes32" },
+      { name: "seller", type: "address" },
+      { name: "amount", type: "uint256" },
+    ],
+    outputs: [],
+  },
+  {
+    type: "function",
+    name: "withdrawSeller",
+    stateMutability: "nonpayable",
+    inputs: [],
+    outputs: [],
+  },
+  {
+    type: "function",
+    name: "withdrawPlatform",
+    stateMutability: "nonpayable",
+    inputs: [],
+    outputs: [],
+  },
+  {
+    type: "function",
+    name: "previewSplit",
+    stateMutability: "view",
+    inputs: [{ name: "amount", type: "uint256" }],
+    outputs: [
+      { name: "sellerAmount", type: "uint256" },
+      { name: "platformAmount", type: "uint256" },
+    ],
+  },
+  {
+    type: "function",
+    name: "pendingSeller",
+    stateMutability: "view",
+    inputs: [{ name: "seller", type: "address" }],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "pendingPlatform",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "totalPending",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "paymentAmount",
+    stateMutability: "view",
+    inputs: [{ name: "paymentId", type: "bytes32" }],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "isUsed",
+    stateMutability: "view",
+    inputs: [{ name: "paymentId", type: "bytes32" }],
+    outputs: [{ name: "", type: "bool" }],
+  },
+  {
+    type: "function",
+    name: "minFee",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "maxFee",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "platformFeeBps",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "treasury",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "address" }],
+  },
+  {
+    type: "function",
+    name: "owner",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "address" }],
+  },
+  {
+    type: "function",
+    name: "musd",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "address" }],
+  },
+  {
+    type: "function",
+    name: "feeAmount",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    type: "event",
+    name: "PaymentDeposited",
+    inputs: [
+      { name: "payer", type: "address", indexed: true },
+      { name: "seller", type: "address", indexed: true },
+      { name: "paymentId", type: "bytes32", indexed: true },
+      { name: "amount", type: "uint256", indexed: false },
+      { name: "sellerAmount", type: "uint256", indexed: false },
+      { name: "platformAmount", type: "uint256", indexed: false },
+    ],
+  },
+] as const;

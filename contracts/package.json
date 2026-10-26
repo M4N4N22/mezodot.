@@ -1,0 +1,22 @@
+{
+  "name": "mezodot-contracts",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:mezo": "hardhat run scripts/deploy.ts --network mezoMainnet",
+    "deploy:mezo-testnet": "hardhat run scripts/deploy.ts --network mezoTestnet",
+    "deposit:mezo": "hardhat run scripts/deposit.ts --network mezoMainnet",
+    "deposit:mezo-testnet": "hardhat run scripts/deposit.ts --network mezoTestnet",
+    "node": "hardhat node"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "@types/node": "^20.19.0",
+    "dotenv": "^18.0.1",
+    "hardhat": "^2.26.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.0"
+  }
+}

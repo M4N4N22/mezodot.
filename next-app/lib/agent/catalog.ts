@@ -1,0 +1,97 @@
+/** Machine-readable catalog helpers for agent discovery. Not UI copy. */
+
+import { ARC } from "@/lib/mezo/constants";
+import type { ServiceRow } from "@/lib/types/catalog";
+
+const INPUT_HINT = {
+  type: "object",
+  required: ["prompt"],
+  properties: {
+    prompt: { type: "string", description: "Natural-language request for the service" },
+  },
+} as const;
+
+export function publicServiceForAgent(
+  s: ServiceRow,
+  sellerName?: string | null,
+) {
+  return {
+    slug: s.slug,
+    title: s.title,
+    description: s.description,
+    price_usdc: s.price_usdc,
+    price_wei: s.price_wei,
+    seller: s.owner_address,
+    seller_name: sellerName ?? null,
+    paused: s.paused,
+    has_upstream: Boolean(s.upstream_url?.trim()),
+    image_url: s.image_url ?? null,
+    input: INPUT_HINT,
+    example: {
+      service: s.slug,
+      input: { prompt: "Briefly explain what this service should do." },
+    },
+  };
+}
+
+export type SellerNameMap = Record<string, string | null>;
+
+/** Envelope agents should read first from GET /api/services */
+export function agentCatalogEnvelope(
+  services: ServiceRow[],
+  sellerNames: SellerNameMap = {},
+) {
+  const gateway =
+    ARC.gatewayAddress && ARC.gatewayAddress.length === 42
+      ? ARC.gatewayAddress
+      : null;
+
+  const sampleSlug = services[0]?.slug ?? "quick-brief";
+
+  return {
+    protocol: "mezodot.gateway",
+    version: 2,
+    chainId: ARC.chainId,
+    docs: "/docs",
+    currency: {
+      symbol: "MUSD",
+      decimals: 18,
+      note: "MUSD ERC-20 (18 decimals) on Mezo — approve then depositPayment(paymentId, seller, amount). Gas is BTC.",
+    },
+    gateway,
+    endpoints: {
+      catalog: "/api/services",
+      service: "/api/services/{slug}",
+      unlock: "/api/gateway",
+      health: "/api/health",
+      mcp: "/api/mcp",
+      wellKnownPlugin: "/.well-known/ai-plugin.json",
+      wellKnownAgent: "/.well-known/mezodot.json",
+      openapi: "/.well-known/openapi.json",
+    },
+    payment: {
+      method: "depositPayment",
+      args: ["paymentId:bytes32", "seller:address", "amount:uint256"],
+      auth: "EIP-191 personal_sign over gateway challenge",
+      headers: ["X-Mezo-Tx-Hash", "X-Mezo-Address", "X-Mezo-Signature"],
+      unlockCreditHeader: "X-Mezo-Unlock-Credit",
+      unpaidStatus: 402,
+      x402: {
+        version: 2,
+        header: "PAYMENT-REQUIRED",
+        settlement: "MezoDotPromptGateway",
+      },
+    },
+    examples: {
+      curl: `curl -s "$BASE/api/services" && npm run agent:pay -- ${sampleSlug} "Your prompt"`,
+    },
+    rpcUrl: ARC.rpcUrl,
+    explorerTxBase: ARC.explorerTxBase,
+    services: services.map((s) =>
+      publicServiceForAgent(
+        s,
+        sellerNames[s.owner_address.toLowerCase()] ?? null,
+      ),
+    ),
+  };
+}
